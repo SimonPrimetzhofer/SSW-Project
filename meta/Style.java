@@ -1,2 +1,4 @@
-package meta;public class Style {
+package meta;
+
+public class Style {
 }

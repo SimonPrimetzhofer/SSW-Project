@@ -1,2 +1,7 @@
-package contract;public interface PieceListContract {
+package contract;
+
+import piecelist.Piece;
+
+public interface PieceListContract extends TextContract {
+    Piece split(int pos);
 }

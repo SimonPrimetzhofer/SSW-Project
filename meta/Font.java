@@ -1,2 +1,4 @@
-package meta;public class Font {
+package meta;
+
+public class Font {
 }
