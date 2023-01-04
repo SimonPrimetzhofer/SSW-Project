@@ -4,7 +4,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public interface TextContract {
-    void loadFrom(InputStream in);
+    String loadFrom(InputStream in);
     void storeTo(OutputStream out);
 
     char charAt(int pos);

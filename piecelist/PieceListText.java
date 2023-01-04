@@ -31,11 +31,10 @@ public class PieceListText implements PieceListContract {
     }
 
     @Override
-    public void loadFrom(InputStream in) {
+    public String loadFrom(InputStream in) {
         StringBuilder resultStringBuilder = new StringBuilder();
 
         try {
-            // FileInputStream s = new FileInputStream(in);
             len = in.available();
             try (BufferedReader br
                          = new BufferedReader(new InputStreamReader(in))) {
@@ -45,7 +44,6 @@ public class PieceListText implements PieceListContract {
                 }
             }
 
-            // r.read(buf, 0, len);
             in.close();
 
             // TODO: remove -> only for test purposes
@@ -53,11 +51,34 @@ public class PieceListText implements PieceListContract {
         } catch (IOException e) {
             len = 0;
         }
+
+        return resultStringBuilder.toString();
     }
 
     @Override
     public void storeTo(OutputStream out) {
         // TODO: write piecelisttext to file including styles and fonts
+        Piece currentPiece = firstPiece;
+        StringBuilder result = new StringBuilder();
+
+        while(currentPiece != null) {
+            // write current piece content to file
+            try {
+                result.append(loadFrom(new FileInputStream(currentPiece.file)));
+            } catch (FileNotFoundException ex) {
+                System.err.printf("Could not find file %s", currentPiece.file.getName());
+            }
+            currentPiece = currentPiece.next;
+        }
+
+        try (BufferedWriter bw
+                     = new BufferedWriter(new OutputStreamWriter(out))) {
+            bw.write(result.toString());
+        } catch (IOException e) {
+            System.err.println("Could not write to file");
+        }
+
+
     }
 
     @Override
