@@ -59,8 +59,15 @@ public class Editor {
 		openFile.addActionListener(e -> {
 			final int action = fileChooser.showOpenDialog(null);
 
+
 			if (action == JFileChooser.APPROVE_OPTION) {
-				fileChooser.getSelectedFile().getAbsolutePath();
+				Editor.main(new String[]{fileChooser.getSelectedFile().getAbsolutePath()});
+
+				/*try {
+					pieceListText.loadFrom(new FileInputStream(fileChooser.getSelectedFile().getAbsolutePath()));
+				} catch (FileNotFoundException fileNotFoundException) {
+					System.err.println("Trouble opening file...");
+				}*/
 			}
 
 		});

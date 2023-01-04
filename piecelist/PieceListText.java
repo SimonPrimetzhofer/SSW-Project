@@ -20,51 +20,28 @@ public class PieceListText implements PieceListContract {
 
     public PieceListText(String filename) {
         scratch = new File("./scratch.txt");
-
         File firstFile = new File(filename);
         firstPiece = new Piece((int) firstFile.length(), firstFile, 0);
-        try {
-            loadFrom(new FileInputStream(firstFile));
-        } catch (IOException ex) {
-            System.err.printf("File %s could not be opened or does not exist!", filename);
-        }
     }
 
     @Override
-    public String loadFrom(InputStream in) {
-        StringBuilder resultStringBuilder = new StringBuilder();
-
-        try {
-            len = in.available();
-            try (BufferedReader br
-                         = new BufferedReader(new InputStreamReader(in))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    resultStringBuilder.append(line).append("\n");
-                }
-            }
-
-            in.close();
-
-            // TODO: remove -> only for test purposes
-            System.out.println(resultStringBuilder);
-        } catch (IOException e) {
-            len = 0;
-        }
-
-        return resultStringBuilder.toString();
+    public void loadFrom(InputStream in) {
+       /* try {
+            loadFrom(new FileInputStream(firstFile));
+        } catch (IOException ex) {
+            System.err.printf("File %s could not be opened or does not exist!", filename);
+        }*/
     }
 
     @Override
     public void storeTo(OutputStream out) {
-        // TODO: write piecelisttext to file including styles and fonts
         Piece currentPiece = firstPiece;
         StringBuilder result = new StringBuilder();
 
         while(currentPiece != null) {
             // write current piece content to file
             try {
-                result.append(loadFrom(new FileInputStream(currentPiece.file)));
+                result.append(readFileContent(new FileInputStream(currentPiece.file)));
             } catch (FileNotFoundException ex) {
                 System.err.printf("Could not find file %s", currentPiece.file.getName());
             }
@@ -81,9 +58,29 @@ public class PieceListText implements PieceListContract {
 
     }
 
+    private String readFileContent(final FileInputStream in) {
+        StringBuilder resultStringBuilder = new StringBuilder();
+
+        try {
+            len = in.available();
+            try (BufferedReader br
+                         = new BufferedReader(new InputStreamReader(in))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    resultStringBuilder.append(line).append("\n");
+                }
+            }
+
+            in.close();
+        } catch (IOException e) {
+            len = 0;
+        }
+
+        return resultStringBuilder.toString();
+    }
+
     @Override
     public char charAt(int pos) {
-        // TODO: return char at position pos
         final Piece piece = getPieceAt(pos);
 
         String fileContent = getFileContent(piece.file);
