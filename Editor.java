@@ -1,3 +1,6 @@
+import piecelist.PieceListText;
+import viewer.PieceListViewer;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -22,7 +25,7 @@ public class Editor {
 		}
 
 		JScrollBar scrollBar = new JScrollBar(Adjustable.VERTICAL, 0, 0, 0, 0);
-		Viewer viewer = new Viewer(new Text(path), scrollBar);
+		PieceListViewer viewer = new PieceListViewer(new PieceListText(path), scrollBar);
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add("Center", viewer);

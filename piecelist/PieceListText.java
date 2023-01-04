@@ -1,20 +1,58 @@
 package piecelist;
 
 import common.FileWriter;
+import common.UpdateEvent;
 import contract.PieceListContract;
+import contract.UpdateEventListener;
 
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public class PieceListText implements PieceListContract {
-    int len;            // total text length
-    Piece firstPiece;   // first piece of text
-    File scratch;       // scratch file for adding new stuff
+    private int len;            // total text length
+    private Piece firstPiece;   // first piece of text
+    private File scratch;       // scratch file for adding new stuff
+
+    public int getLen() {
+        return len;
+    }
+
+    public PieceListText(String filename) {
+        scratch = new File("./scratch.txt");
+
+        File firstFile = new File(filename);
+        firstPiece = new Piece((int) firstFile.length(), firstFile, 0);
+        try {
+            loadFrom(new FileInputStream(firstFile));
+        } catch (IOException ex) {
+            System.err.printf("File %s could not be opened or does not exist!", filename);
+        }
+    }
 
     @Override
     public void loadFrom(InputStream in) {
-        // TODO: read piecelisttext from file including styles and fonts
+        StringBuilder resultStringBuilder = new StringBuilder();
+
+        try {
+            // FileInputStream s = new FileInputStream(in);
+            len = in.available();
+            try (BufferedReader br
+                         = new BufferedReader(new InputStreamReader(in))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    resultStringBuilder.append(line).append("\n");
+                }
+            }
+
+            // r.read(buf, 0, len);
+            in.close();
+
+            // TODO: remove -> only for test purposes
+            System.out.println(resultStringBuilder);
+        } catch (IOException e) {
+            len = 0;
+        }
     }
 
     @Override
@@ -31,7 +69,7 @@ public class PieceListText implements PieceListContract {
     }
 
     @Override
-    public void insert(int pos, char ch) {
+    public void insert(int pos, String s) {
         // split at pos for inserting text here
         Piece p = split(pos);
 
@@ -47,7 +85,7 @@ public class PieceListText implements PieceListContract {
             p = q;
         }
         // write character
-        FileWriter.write(scratch.getAbsolutePath(), ch);
+        FileWriter.write(scratch.getAbsolutePath(), s);
 
         // increase length of piece and overall text
         p.len++;
@@ -97,5 +135,23 @@ public class PieceListText implements PieceListContract {
         }
 
         return p;
+    }
+
+    ArrayList<UpdateEventListener> listeners = new ArrayList<>();
+
+    public void addUpdateEventListener(UpdateEventListener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeUpdateEventListener(UpdateEventListener listener) {
+        listeners.remove(listener);
+    }
+
+    private void notify(UpdateEvent e) {
+        Iterator<UpdateEventListener> iter = listeners.iterator();
+        while (iter.hasNext()) {
+            UpdateEventListener listener = iter.next();
+            listener.update(e);
+        }
     }
 }

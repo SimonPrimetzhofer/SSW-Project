@@ -1,3 +1,5 @@
+package legacy;
+
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.JScrollBar;
@@ -25,7 +27,7 @@ class Selection {
 }
 
 /**********************************************************************
-*  Viewer
+*  legacy.Viewer
 **********************************************************************/
 
 public class Viewer extends Canvas {
