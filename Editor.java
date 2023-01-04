@@ -3,6 +3,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 public class Editor {
 
@@ -69,9 +71,53 @@ public class Editor {
 		editActionMenu.add(copy);
 		editActionMenu.add(paste);
 
+		// Font menu
+		JMenu fontMenu = new JMenu("Fonts");
+		Arrays.stream(GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts())
+			.filter(font -> font.getFontName().equals(font.getFamily()))
+			.limit(15)
+			.forEach(font -> {
+				JMenuItem fontItem = new JMenuItem(font.getFontName());
+				fontItem.addActionListener(e -> {
+					// TODO: set font active for current selection
+				});
+				fontMenu.add(fontItem);
+			});
+
+		// size menu
+		JMenu sizeMenu = new JMenu("Size");
+		IntStream.iterate(6, num -> num + 1).limit(15).forEach(num -> {
+			JMenuItem sizeItem = new JMenuItem(String.valueOf(num));
+			sizeItem.addActionListener(e -> {
+				// TODO: set size for current selection
+			});
+
+			sizeMenu.add(sizeItem);
+		});
+
+		JMenu styleMenu = new JMenu("Style");
+		JMenuItem normal = new JMenuItem("Plain");
+		normal.addActionListener(e -> {
+			// TODO: set style to Font.PLAIN
+		});
+		JMenuItem bold = new JMenuItem("Bold");
+		bold.addActionListener(e -> {
+			// TODO: set style to Font.BOLD
+		});
+		JMenuItem italic = new JMenuItem("Italic");
+		italic.addActionListener(e -> {
+			// TODO: set style to Font.ITALIC
+		});
+		styleMenu.add(normal);
+		styleMenu.add(bold);
+		styleMenu.add(italic);
+
 		// add menus
 		menuBar.add(fileActionMenu);
 		menuBar.add(editActionMenu);
+		menuBar.add(fontMenu);
+		menuBar.add(sizeMenu);
+		menuBar.add(styleMenu);
 
 		// add find input
 		final JTextField textField = new JTextField();
