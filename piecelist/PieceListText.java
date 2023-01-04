@@ -63,9 +63,15 @@ public class PieceListText implements PieceListContract {
     @Override
     public char charAt(int pos) {
         // TODO: return char at position pos
-        final Piece p = getPieceAt(pos);
+        final Piece piece = getPieceAt(pos);
 
-        return 0;
+        String fileContent = getFileContent(piece.file);
+
+        if (pos >= fileContent.length()) {
+            return '\0';
+        }
+
+        return fileContent.charAt(piece.filePos + pos);
     }
 
     @Override
@@ -109,7 +115,13 @@ public class PieceListText implements PieceListContract {
     @Override
     public Piece split(int pos) {
         // set p to piece containing pos
-        Piece p = getPieceAt(pos);
+        Piece p = firstPiece;
+
+        int len = p.len;
+        while (pos > len) {
+            p = p.next;
+            len += p.len;
+        }
 
         // split piece p
         if (pos != len) {
@@ -129,13 +141,30 @@ public class PieceListText implements PieceListContract {
         Piece p = firstPiece;
 
         int len = p.len;
-        while (pos > len) {
+        while (pos > len && p.next != null) {
             p = p.next;
             len += p.len;
         }
 
         return p;
     }
+
+    private String getFileContent(File file) {
+        StringBuilder resultStringBuilder = new StringBuilder();
+        try (BufferedReader br
+                     = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                resultStringBuilder.append(line).append("\n");
+            }
+        } catch (IOException ex) {
+            System.err.printf("Could not open or read from file %s!", file.getName());
+        }
+
+        return resultStringBuilder.toString();
+    }
+
+    // update behaviour
 
     ArrayList<UpdateEventListener> listeners = new ArrayList<>();
 
