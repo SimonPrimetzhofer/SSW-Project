@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.Arrays;
 import java.util.stream.IntStream;
+import static javax.swing.JOptionPane.showMessageDialog;
 
 public class Editor {
 
@@ -33,8 +34,21 @@ public class Editor {
 		// add find input
 		final JTextField textField = new JTextField();
 		textField.addActionListener(e -> {
-			// TODO: handle input changed
-			System.out.println(e.getActionCommand());
+			final String text = e.getActionCommand();
+			int index = pieceListText.indexOf(text);
+
+			if (index == -1) {
+				// show error message to user
+				showMessageDialog(null, "Text " + text + " not found!");
+				// reset caret to start
+				viewer.setCaret(0);
+			} else {
+				// update index to found first occurence
+				viewer.setCaret(index);
+			}
+
+			// reset input
+			textField.setText("");
 		});
 
 		JPanel panel = new JPanel(new BorderLayout());

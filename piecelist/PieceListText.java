@@ -81,15 +81,21 @@ public class PieceListText implements PieceListContract {
 
     @Override
     public char charAt(int pos) {
-        final Piece piece = getPieceAt(pos);
+        Piece p = firstPiece;
 
-        String fileContent = getFileContent(piece.file);
+        int len = p.len;
+        while (pos > len && p.next != null) {
+            p = p.next;
+            len += p.len;
+        }
+
+        String fileContent = getFileContent(p.file);
 
         if (pos >= fileContent.length()) {
             return '\0';
         }
 
-        return fileContent.charAt(piece.filePos + pos);
+        return fileContent.charAt(p.filePos + pos);
     }
 
     @Override
@@ -126,8 +132,18 @@ public class PieceListText implements PieceListContract {
 
     @Override
     public int indexOf(String pattern) {
-        // TODO: for find method
-        return 0;
+        Piece p = firstPiece;
+
+        while (p != null) {
+            int index = getFileContent(p.file).indexOf(pattern);
+            if (index > -1) {
+                return p.filePos + index;
+            }
+
+            p = p.next;
+        }
+
+        return -1;
     }
 
     @Override
@@ -150,18 +166,6 @@ public class PieceListText implements PieceListContract {
             Piece q = new Piece(len2, p.file, p.filePos + len1);
             q.next = p.next;
             p.next = q;
-        }
-
-        return p;
-    }
-
-    private Piece getPieceAt(int pos) {
-        Piece p = firstPiece;
-
-        int len = p.len;
-        while (pos > len && p.next != null) {
-            p = p.next;
-            len += p.len;
         }
 
         return p;
