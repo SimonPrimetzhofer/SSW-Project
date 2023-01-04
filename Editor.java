@@ -27,7 +27,15 @@ public class Editor {
 		JScrollBar scrollBar = new JScrollBar(Adjustable.VERTICAL, 0, 0, 0, 0);
 		PieceListViewer viewer = new PieceListViewer(new PieceListText(path), scrollBar);
 
+		// add find input
+		final JTextField textField = new JTextField();
+		textField.addActionListener(e -> {
+			// TODO: handle input changed
+			System.out.println(e.getActionCommand());
+		});
+
 		JPanel panel = new JPanel(new BorderLayout());
+		panel.add("North", textField);
 		panel.add("Center", viewer);
 		panel.add("East", scrollBar);
 
@@ -38,15 +46,14 @@ public class Editor {
 			}
 		});
 
-		JMenuBar menuBar = new JMenuBar();
-
+		MenuBar menuBar = new MenuBar();
 		// File actions
-		JMenu fileActionMenu = new JMenu("File");
-		JMenuItem openFile = new JMenuItem("Open");
+		Menu fileActionMenu = new Menu("File");
+		MenuItem openFile = new MenuItem("Open");
 		openFile.addActionListener(e -> {
 			// TODO: open file
 		});
-		JMenuItem saveFile = new JMenuItem("Save");
+		MenuItem saveFile = new MenuItem("Save");
 		saveFile.addActionListener(e -> {
 			// TODO save file
 		});
@@ -55,18 +62,18 @@ public class Editor {
 		fileActionMenu.add(saveFile);
 
 		// Edit actions
-		JMenu editActionMenu = new JMenu("Edit");
-		JMenuItem cut = new JMenuItem("Cut");
+		Menu editActionMenu = new Menu("Edit");
+		MenuItem cut = new MenuItem("Cut");
 		cut.addActionListener(e -> {
 			// TODO: cut text
 		});
 
-		JMenuItem copy = new JMenuItem("Copy");
+		MenuItem copy = new MenuItem("Copy");
 		copy.addActionListener(e -> {
 			// TODO: copy text
 		});
 
-		JMenuItem paste = new JMenuItem(("Paste"));
+		MenuItem paste = new MenuItem(("Paste"));
 		paste.addActionListener(e -> {
 			// TODO: paste text
 		});
@@ -75,12 +82,12 @@ public class Editor {
 		editActionMenu.add(paste);
 
 		// Font menu
-		JMenu fontMenu = new JMenu("Fonts");
+		Menu fontMenu = new Menu("Fonts");
 		Arrays.stream(GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts())
 			.filter(font -> font.getFontName().equals(font.getFamily()))
 			.limit(15)
 			.forEach(font -> {
-				JMenuItem fontItem = new JMenuItem(font.getFontName());
+				MenuItem fontItem = new MenuItem(font.getFontName());
 				fontItem.addActionListener(e -> {
 					// TODO: set font active for current selection
 				});
@@ -88,9 +95,9 @@ public class Editor {
 			});
 
 		// size menu
-		JMenu sizeMenu = new JMenu("Size");
+		Menu sizeMenu = new Menu("Size");
 		IntStream.iterate(6, num -> num + 1).limit(15).forEach(num -> {
-			JMenuItem sizeItem = new JMenuItem(String.valueOf(num));
+			MenuItem sizeItem = new MenuItem(String.valueOf(num));
 			sizeItem.addActionListener(e -> {
 				// TODO: set size for current selection
 			});
@@ -98,16 +105,16 @@ public class Editor {
 			sizeMenu.add(sizeItem);
 		});
 
-		JMenu styleMenu = new JMenu("Style");
-		JMenuItem normal = new JMenuItem("Plain");
+		Menu styleMenu = new Menu("Style");
+		MenuItem normal = new MenuItem("Plain");
 		normal.addActionListener(e -> {
 			// TODO: set style to Font.PLAIN
 		});
-		JMenuItem bold = new JMenuItem("Bold");
+		MenuItem bold = new MenuItem("Bold");
 		bold.addActionListener(e -> {
 			// TODO: set style to Font.BOLD
 		});
-		JMenuItem italic = new JMenuItem("Italic");
+		MenuItem italic = new MenuItem("Italic");
 		italic.addActionListener(e -> {
 			// TODO: set style to Font.ITALIC
 		});
@@ -122,15 +129,7 @@ public class Editor {
 		menuBar.add(sizeMenu);
 		menuBar.add(styleMenu);
 
-		// add find input
-		final JTextField textField = new JTextField();
-		textField.addActionListener(e -> {
-			// TODO: handle input changed
-			System.out.println(e.getActionCommand());
-		});
-		menuBar.add(textField);
-
-		frame.setJMenuBar(menuBar);
+		frame.setMenuBar(menuBar);
 
 		frame.setSize(700, 800);
 		frame.setResizable(true);
