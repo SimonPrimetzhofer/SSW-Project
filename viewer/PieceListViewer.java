@@ -38,7 +38,8 @@ public class PieceListViewer extends Canvas {
     static final int    BOTTOM = 5; // bottom margin
     static final int    LEFT = 5;   // left margin
     static final int    EOF = '\0';
-    static final String CRLF = "\r\n";
+    static final char CR = '\r';
+    static final char LF = '\n';
 
     PieceListText text;
     Line firstLine = null; // the lines in this viewer
@@ -65,6 +66,11 @@ public class PieceListViewer extends Canvas {
             public void keyPressed(KeyEvent e) { doKeyPressed(e); }
         });
         this.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if(e.getClickCount() == 2) {
+                    doMouseDoubleClicked(e);
+                }
+            }
             public void mousePressed(MouseEvent e) { doMousePressed(e); }
             public void mouseReleased(MouseEvent e) { doMouseReleased(e); }
         });
@@ -269,9 +275,10 @@ public class PieceListViewer extends Canvas {
                 }
             } else if (ch == KeyEvent.VK_ESCAPE) {
             } else if (ch == KeyEvent.VK_ENTER) {
-                text.insert(caret.tpos, CRLF);
+                text.insert(caret.tpos, CR);
+                text.insert(caret.tpos, LF);
             } else {
-                text.insert(caret.tpos, String.valueOf(ch));
+                text.insert(caret.tpos, ch);
             }
             scrollBar.setValues(firstTpos, 0, 0, text.getLen());
         }
@@ -301,6 +308,25 @@ public class PieceListViewer extends Canvas {
     /*------------------------------------------------------------
      *  mouse handling
      *-----------------------------------------------------------*/
+
+    private void doMouseDoubleClicked(MouseEvent e) {
+        Position pos = Pos(e.getX(), e.getY());
+
+        // TODO: code verschönern -> zweifacher zugriff auf charAt
+        // find left border of word
+        int leftCharCount = 0;
+        while (!Character.isWhitespace(text.charAt(pos.tpos - 1 - leftCharCount)) && text.charAt(pos.tpos - 1 - leftCharCount) != '\0') {
+            leftCharCount++;
+        }
+
+        // find right border of word
+        int rightCharCount = 0;
+        while (!Character.isWhitespace(text.charAt(pos.tpos + rightCharCount)) && text.charAt(pos.tpos + rightCharCount) != '\0') {
+            rightCharCount++;
+        }
+        setSelection(pos.tpos - leftCharCount, pos.tpos + rightCharCount);
+        lastPos = pos;
+    }
 
     private void doMousePressed(MouseEvent e) {
         removeCaret(); removeSelection();
@@ -422,7 +448,7 @@ public class PieceListViewer extends Canvas {
         if (e.getFrom() == e.getTo()) { // insert
             if (e.getFrom() != caret.tpos) pos = Pos(e.getFrom());
             int newCarPos = pos.tpos + e.getText().length();
-            if (e.getText().indexOf(CRLF) >= 0) {
+            if (e.getText().indexOf(CR) >= 0) {
                 rebuildFrom(pos);
                 if (pos.y + pos.line.h > getHeight() - BOTTOM)
                     scrollBar.setValue(firstTpos + firstLine.len);

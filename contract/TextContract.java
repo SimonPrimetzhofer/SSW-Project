@@ -9,7 +9,7 @@ public interface TextContract {
 
     char charAt(int pos);
 
-    void insert(int pos, String s);
+    void insert(int pos, char ch);
     void delete(int from, int to);
 
     int indexOf(String pattern);

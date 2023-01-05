@@ -10,27 +10,49 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class PieceListText implements PieceListContract {
+    private final Piece firstPiece;   // first piece of text
+    private final File scratch;       // scratch file for adding new stuff
+    ArrayList<UpdateEventListener> listeners = new ArrayList<>();
     private int len;            // total text length
-    private Piece firstPiece;   // first piece of text
-    private File scratch;       // scratch file for adding new stuff
-
-    public int getLen() {
-        return len;
-    }
 
     public PieceListText(String filename) {
         scratch = new File("./scratch.txt");
         File firstFile = new File(filename);
         firstPiece = new Piece((int) firstFile.length(), firstFile, 0);
+        len = (int) firstFile.length();
+    }
+
+    public int getLen() {
+        return len;
     }
 
     @Override
     public void loadFrom(InputStream in) {
-       /* try {
-            loadFrom(new FileInputStream(firstFile));
-        } catch (IOException ex) {
-            System.err.printf("File %s could not be opened or does not exist!", filename);
-        }*/
+        // TODO: Load fonts and styles from text file
+        try {
+            //len = in.available();
+            try (BufferedReader br
+                         = new BufferedReader(new InputStreamReader(in))) {
+                // get textoffset from file
+                int textOffset = br.read();
+                // read font and style descriptors
+                for (int i = 0; i < textOffset; i += 3){
+                    int pieceLen = br.read();
+                    int font = br.read();
+                    int style = br.read();
+                }
+
+                //
+
+                String line;
+                while ((line = br.readLine()) != null) {
+                }
+            }
+
+            in.close();
+        } catch (IOException e) {
+            len = 0;
+        }
     }
 
     @Override
@@ -38,9 +60,11 @@ public class PieceListText implements PieceListContract {
         Piece currentPiece = firstPiece;
         StringBuilder result = new StringBuilder();
 
-        while(currentPiece != null) {
+        while (currentPiece != null) {
             // write current piece content to file
             try {
+                // TODO: don't append whole file (only starting from filePos up to filePos + len
+                // TODO: don't append \0 in middle of file
                 result.append(readFileContent(new FileInputStream(currentPiece.file)));
             } catch (FileNotFoundException ex) {
                 System.err.printf("Could not find file %s", currentPiece.file.getName());
@@ -81,30 +105,28 @@ public class PieceListText implements PieceListContract {
 
     @Override
     public char charAt(int pos) {
+        if (pos < 0 || pos >= len) return '\0';
+
         Piece p = firstPiece;
 
         int len = p.len;
-        while (pos > len && p.next != null) {
+        while (pos > len) {
             p = p.next;
             len += p.len;
         }
 
         String fileContent = getFileContent(p.file);
 
-        if (pos >= fileContent.length()) {
-            return '\0';
-        }
-
         return fileContent.charAt(p.filePos + pos);
     }
 
     @Override
-    public void insert(int pos, String s) {
+    public void insert(int pos, char ch) {
         // split at pos for inserting text here
         Piece p = split(pos);
 
         // TODO: check if not last piece on scratch file
-        if (true) {
+        if (!(p.file == scratch && p.next == null)) {
             Piece q = new Piece(0, scratch, (int) scratch.length());
 
             // new piece is predecessor of previous piece
@@ -115,13 +137,13 @@ public class PieceListText implements PieceListContract {
             p = q;
         }
         // write character
-        FileWriter.write(scratch.getAbsolutePath(), s);
+        FileWriter.write(scratch.getAbsolutePath(), ch);
 
         // increase length of piece and overall text
         p.len++;
         len++;
 
-        notify(new UpdateEvent(pos, pos, s));
+        notify(new UpdateEvent(pos, pos, String.valueOf(ch)));
     }
 
     @Override
@@ -156,7 +178,7 @@ public class PieceListText implements PieceListContract {
         Piece p = firstPiece;
 
         int len = p.len;
-        while (pos > len && p.next != null) {
+        while (pos > len) {
             p = p.next;
             len += p.len;
         }
@@ -175,6 +197,7 @@ public class PieceListText implements PieceListContract {
         return p;
     }
 
+
     private String getFileContent(File file) {
         StringBuilder resultStringBuilder = new StringBuilder();
         try (BufferedReader br
@@ -191,9 +214,6 @@ public class PieceListText implements PieceListContract {
     }
 
     // update behaviour
-
-    ArrayList<UpdateEventListener> listeners = new ArrayList<>();
-
     public void addUpdateEventListener(UpdateEventListener listener) {
         listeners.add(listener);
     }
