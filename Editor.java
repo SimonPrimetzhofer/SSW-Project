@@ -39,7 +39,7 @@ public class Editor {
 
 			if (index == -1) {
 				// show error message to user
-				showMessageDialog(null, "Text " + text + " not found!");
+				showMessageDialog(viewer, "Text " + text + " not found!");
 				// reset caret to start
 				viewer.setCaret(0);
 			} else {

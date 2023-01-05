@@ -120,6 +120,8 @@ public class PieceListText implements PieceListContract {
         // increase length of piece and overall text
         p.len++;
         len++;
+
+        notify(new UpdateEvent(pos, pos, s));
     }
 
     @Override
@@ -128,6 +130,8 @@ public class PieceListText implements PieceListContract {
         Piece b = split(to);
         // cut out all pieces in between
         a.next = b.next;
+
+        notify(new UpdateEvent(from, to, null));
     }
 
     @Override
@@ -152,7 +156,7 @@ public class PieceListText implements PieceListContract {
         Piece p = firstPiece;
 
         int len = p.len;
-        while (pos > len) {
+        while (pos > len && p.next != null) {
             p = p.next;
             len += p.len;
         }
