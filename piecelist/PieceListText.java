@@ -108,7 +108,7 @@ public class PieceListText implements PieceListContract {
             Piece q = new Piece(0, scratch, (int) scratch.length());
 
             // new piece is predecessor of previous piece
-            q.next = p;
+            q.next = p.next;
             // previous p
             p.next = q;
             //
