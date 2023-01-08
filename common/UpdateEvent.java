@@ -1,10 +1,15 @@
 package common;
 
 public class UpdateEvent {  // [from..to[ was replaced by text
-    private int from;
-    private int to;
-    private String text;
-    public UpdateEvent(int a, int b, String t) { from = a; to = b; text = t; }
+    private final int from;
+    private final int to;
+    private final char ch;
+
+    public UpdateEvent(int a, int b, char ch) {
+        from = a;
+        to = b;
+        this.ch = ch;
+    }
 
     public int getFrom() {
         return from;
@@ -14,7 +19,7 @@ public class UpdateEvent {  // [from..to[ was replaced by text
         return to;
     }
 
-    public String getText() {
-        return text;
+    public char getCh() {
+        return ch;
     }
 }

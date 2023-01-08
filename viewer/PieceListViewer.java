@@ -3,9 +3,9 @@ package viewer;
 import common.UpdateEvent;
 import piecelist.PieceListText;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import javax.swing.JScrollBar;
 import java.util.Collections;
 
 class Line {
@@ -22,11 +22,19 @@ class Position {
     int tpos;  // text position (relative to start of text)
     int org;   // origin (text position of first character in this line)
     int off;   // text offset from org
+
+    public int getTPos() {
+        return tpos;
+    }
 }
 
 class Selection {
     Position beg, end;
-    Selection (Position a, Position b) { beg = a; end = b; }
+
+    Selection(Position a, Position b) {
+        beg = a;
+        end = b;
+    }
 }
 
 /**********************************************************************
@@ -34,10 +42,10 @@ class Selection {
  **********************************************************************/
 
 public class PieceListViewer extends Canvas {
-    static final int    TOP = 5;    // top margin
-    static final int    BOTTOM = 5; // bottom margin
-    static final int    LEFT = 5;   // left margin
-    static final int    EOF = '\0';
+    static final int TOP = 5;    // top margin
+    static final int BOTTOM = 5; // bottom margin
+    static final int LEFT = 5;   // left margin
+    static final int EOF = '\0';
     static final char CR = '\r';
     static final char LF = '\n';
 
@@ -45,8 +53,8 @@ public class PieceListViewer extends Canvas {
     Line firstLine = null; // the lines in this viewer
     int firstTpos = 0;     // first text position in this viewer
     int lastTpos;          // last text position in this viewer
-    Selection sel = null;	 // current selection
-    Position caret;				 // current caret
+    Selection sel = null;     // current selection
+    Position caret;                 // current caret
     Position lastPos;      // last mouse position: used during mouse dragging
     JScrollBar scrollBar;
     Graphics g;
@@ -57,25 +65,40 @@ public class PieceListViewer extends Canvas {
         scrollBar.setUnitIncrement(50);
         scrollBar.setBlockIncrement(500);
         scrollBar.addAdjustmentListener(new AdjustmentListener() {
-            public void adjustmentValueChanged(AdjustmentEvent e) { doScroll(e); }
+            public void adjustmentValueChanged(AdjustmentEvent e) {
+                doScroll(e);
+            }
         });
         text = t;
         text.addUpdateEventListener(e -> doUpdate(e));
         this.addKeyListener(new KeyAdapter() {
-            public void keyTyped(KeyEvent e) { doKeyTyped(e); }
-            public void keyPressed(KeyEvent e) { doKeyPressed(e); }
+            public void keyTyped(KeyEvent e) {
+                doKeyTyped(e);
+            }
+
+            public void keyPressed(KeyEvent e) {
+                doKeyPressed(e);
+            }
         });
         this.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                if(e.getClickCount() == 2) {
+                if (e.getClickCount() == 2) {
                     doMouseDoubleClicked(e);
                 }
             }
-            public void mousePressed(MouseEvent e) { doMousePressed(e); }
-            public void mouseReleased(MouseEvent e) { doMouseReleased(e); }
+
+            public void mousePressed(MouseEvent e) {
+                doMousePressed(e);
+            }
+
+            public void mouseReleased(MouseEvent e) {
+                doMouseReleased(e);
+            }
         });
         this.addMouseMotionListener(new MouseMotionAdapter() {
-            public void mouseDragged(MouseEvent e) { doMouseDragged(e); }
+            public void mouseDragged(MouseEvent e) {
+                doMouseDragged(e);
+            }
         });
         // disable TAB as a focus traversal key
         setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, Collections.<AWTKeyStroke>emptySet());
@@ -89,7 +112,9 @@ public class PieceListViewer extends Canvas {
         int pos = e.getValue();
         if (pos > 0) { // find start of line
             char ch;
-            do { ch = text.charAt(--pos); } while (pos > 0 && ch != '\n');
+            do {
+                ch = text.charAt(--pos);
+            } while (pos > 0 && ch != '\n');
             if (pos > 0) pos++;
         }
         if (pos != firstTpos) { // scroll
@@ -135,7 +160,8 @@ public class PieceListViewer extends Canvas {
             FontMetrics m = g.getFontMetrics();
             int i = pos.org;
             while (i < tpos) {
-                char ch = text.charAt(i); i++;
+                char ch = text.charAt(i);
+                i++;
                 pos.x += charWidth(m, ch);
             }
         }
@@ -154,7 +180,10 @@ public class PieceListViewer extends Canvas {
             last = line;
             line = line.next;
         }
-        if (line == null) { line = last; pos.org -= last.len; }
+        if (line == null) {
+            line = last;
+            pos.org -= last.len;
+        }
         pos.y = line.base;
         pos.line = line;
         if (x >= line.x + line.w) {
@@ -169,7 +198,8 @@ public class PieceListViewer extends Canvas {
             int w = charWidth(m, ch);
             while (x >= pos.x + w) {
                 pos.x += w;
-                i++; ch = text.charAt(i);
+                i++;
+                ch = text.charAt(i);
                 w = charWidth(m, ch);
             }
             pos.off = i - pos.org;
@@ -187,17 +217,23 @@ public class PieceListViewer extends Canvas {
         g.setXORMode(Color.WHITE);
         int x = caret.x;
         int y = caret.y;
-        g.drawLine(x, y, x, y); y++;
-        g.drawLine(x, y, x + 1, y); y++;
-        g.drawLine(x, y, x + 2, y); y++;
-        g.drawLine(x, y, x + 3, y); y++;
-        g.drawLine(x, y, x + 4, y); y++;
+        g.drawLine(x, y, x, y);
+        y++;
+        g.drawLine(x, y, x + 1, y);
+        y++;
+        g.drawLine(x, y, x + 2, y);
+        y++;
+        g.drawLine(x, y, x + 3, y);
+        y++;
+        g.drawLine(x, y, x + 4, y);
+        y++;
         g.drawLine(x, y, x + 5, y);
         g.setPaintMode();
     }
 
     private void setCaret(Position pos) {
-        removeCaret(); removeSelection();
+        removeCaret();
+        removeSelection();
         caret = pos;
         invertCaret();
     }
@@ -234,7 +270,8 @@ public class PieceListViewer extends Canvas {
             w = line.w + LEFT - x;
             g.fillRect(x, y, w, h);
             line = line.next;
-            x = line.x; y = line.y;
+            x = line.x;
+            y = line.y;
         }
         w = end.x - x;
         g.fillRect(x, y, w, h);
@@ -290,11 +327,13 @@ public class PieceListViewer extends Canvas {
             int pos = caret.tpos;
             char ch;
             if (key == KeyEvent.VK_RIGHT) {
-                pos++; ch = text.charAt(pos);
+                pos++;
+                ch = text.charAt(pos);
                 if (ch == '\n') pos++;
                 setCaret(pos);
             } else if (key == KeyEvent.VK_LEFT) {
-                pos--; ch = text.charAt(pos);
+                pos--;
+                ch = text.charAt(pos);
                 if (ch == '\n') pos--;
                 setCaret(pos);
             } else if (key == KeyEvent.VK_UP) {
@@ -329,7 +368,8 @@ public class PieceListViewer extends Canvas {
     }
 
     private void doMousePressed(MouseEvent e) {
-        removeCaret(); removeSelection();
+        removeCaret();
+        removeSelection();
         Position pos = Pos(e.getX(), e.getY());
         sel = new Selection(pos, pos);
         lastPos = pos;
@@ -372,7 +412,8 @@ public class PieceListViewer extends Canvas {
      *-----------------------------------------------------------*/
 
     private int charWidth(FontMetrics m, char ch) {
-        if (ch == '\t') return 4 * m.charWidth(' '); else return m.charWidth(ch);
+        if (ch == '\t') return 4 * m.charWidth(' ');
+        else return m.charWidth(ch);
     }
 
     private int stringWidth(FontMetrics m, String s) {
@@ -402,7 +443,9 @@ public class PieceListViewer extends Canvas {
                 first = line = new Line();
             } else {
                 Line prev = line;
-                line.next = new Line(); line = line.next; line.prev = prev;
+                line.next = new Line();
+                line = line.next;
+                line.prev = prev;
             }
             StringBuffer buf = new StringBuffer();
             while (ch != '\n' && ch != EOF) {
@@ -411,7 +454,11 @@ public class PieceListViewer extends Canvas {
                 ch = text.charAt(pos);
             }
             boolean eol = ch == '\n';
-            if (eol) { buf.append(ch); pos++; ch = text.charAt(pos); }
+            if (eol) {
+                buf.append(ch);
+                pos++;
+                ch = text.charAt(pos);
+            }
             line.len = buf.length();
             line.text = buf.toString();
             line.x = LEFT;
@@ -430,7 +477,11 @@ public class PieceListViewer extends Canvas {
         Line line = pos.line;
         Line prev = line.prev;
         line = fill(line.y, getHeight() - BOTTOM, pos.org);
-        if (prev == null) firstLine = line; else { prev.next = line; line.prev = prev; }
+        if (prev == null) firstLine = line;
+        else {
+            prev.next = line;
+            line.prev = prev;
+        }
         repaint(LEFT, line.y, getWidth(), getHeight());
     }
 
@@ -459,7 +510,7 @@ public class PieceListViewer extends Canvas {
                 pos.line.w += stringWidth(m, e.getText());
                 pos.line.len += e.getText().length();
                 lastTpos += e.getText().length();
-                repaint(pos.line.x, pos.line.y, getWidth(), pos.line.h+1);
+                repaint(pos.line.x, pos.line.y, getWidth(), pos.line.h + 1);
             }
             setCaret(newCarPos);
 
@@ -475,9 +526,28 @@ public class PieceListViewer extends Canvas {
                 pos.line.w = stringWidth(m, pos.line.text);
                 pos.line.len -= d;
                 lastTpos -= d;
-                repaint(pos.line.x, pos.line.y, getWidth(), pos.line.h+1);
+                repaint(pos.line.x, pos.line.y, getWidth(), pos.line.h + 1);
             }
             setCaret(e.getFrom());
+        }
+    }
+
+    // updating font, size and style
+    public void updateFont(String font) {
+        if (sel != null) {
+            text.setFont(sel.beg.tpos, sel.end.tpos, font);
+        }
+    }
+
+    public void updateSize(int size) {
+        if (sel != null) {
+            text.setSize(sel.beg.tpos, sel.end.tpos, size);
+        }
+    }
+
+    public void updateStyle(int style) {
+        if (sel != null) {
+            text.setStyle(sel.beg.tpos, sel.end.tpos, style);
         }
     }
 

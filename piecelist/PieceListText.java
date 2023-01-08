@@ -5,6 +5,7 @@ import common.UpdateEvent;
 import contract.PieceListContract;
 import contract.UpdateEventListener;
 
+import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -26,6 +27,10 @@ public class PieceListText implements PieceListContract {
         return len;
     }
 
+    public void save() {
+        // save to file
+    }
+
     @Override
     public void loadFrom(InputStream in) {
         // TODO: Load fonts and styles from text file
@@ -36,7 +41,7 @@ public class PieceListText implements PieceListContract {
                 // get textoffset from file
                 int textOffset = br.read();
                 // read font and style descriptors
-                for (int i = 0; i < textOffset; i += 3){
+                for (int i = 0; i < textOffset; i += 3) {
                     int pieceLen = br.read();
                     int font = br.read();
                     int style = br.read();
@@ -143,7 +148,7 @@ public class PieceListText implements PieceListContract {
         p.len++;
         len++;
 
-        notify(new UpdateEvent(pos, pos, String.valueOf(ch)));
+        notify(new UpdateEvent(pos, pos, ch));
     }
 
     @Override
@@ -153,7 +158,7 @@ public class PieceListText implements PieceListContract {
         // cut out all pieces in between
         a.next = b.next;
 
-        notify(new UpdateEvent(from, to, null));
+        notify(new UpdateEvent(from, to, '\0'));
     }
 
     @Override
@@ -195,6 +200,25 @@ public class PieceListText implements PieceListContract {
         }
 
         return p;
+    }
+
+    public void setFont(int from, int to, String font) {
+        Piece start = split(from).next;
+        Piece end = split(to).next;
+
+        while (start != end) {
+            start.font = new Font(font, start.font.getStyle(), start.font.getSize());
+            start = start.next;
+        }
+        notify(new UpdateEvent(from, to, '\0'));
+    }
+
+    public void setSize(int from, int to, int size) {
+
+    }
+
+    public void setStyle(int from, int to, int style) {
+
     }
 
 

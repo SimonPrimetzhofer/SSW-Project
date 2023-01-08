@@ -1,8 +1,6 @@
 package piecelist;
 
-import meta.Font;
-import meta.Style;
-
+import java.awt.*;
 import java.io.File;
 
 public class Piece {
@@ -14,7 +12,8 @@ public class Piece {
 
     // meta information
     Font font;
-    Style style;
+    String style;
+    int size;
 
     public Piece(int len, File file, int filePos) {
         this.len = len;
