@@ -27,7 +27,8 @@ public class PieceListText implements PieceListContract {
     private String getConcatenatedText() {
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < len; i++) {
-            stringBuilder.append(charAt(i));
+            char ch = charAt(i);
+            stringBuilder.append(ch);
         }
         return stringBuilder.toString();
     }
@@ -69,7 +70,7 @@ public class PieceListText implements PieceListContract {
         Piece p = firstPiece;
 
         int len = p.len;
-        while (pos > len) {
+        while (pos >= len && p.next != null) {
             p = p.next;
             len += p.len;
         }
@@ -147,21 +148,6 @@ public class PieceListText implements PieceListContract {
         return -1;
     }
 
-    public int indexOf(String pattern, int skip) {
-        Piece p = firstPiece;
-
-        while (p != null) {
-            int index = getFileContent(p.file, skip).indexOf(pattern);
-            if (index > -1) {
-                return p.filePos + index;
-            }
-
-            p = p.next;
-        }
-
-        return -1;
-    }
-
     private String getFileContent(File file, int skip) {
         StringBuilder resultStringBuilder = new StringBuilder();
         try (BufferedReader br
@@ -184,7 +170,7 @@ public class PieceListText implements PieceListContract {
         Piece p = firstPiece;
 
         int len = p.len;
-        while (pos > len) {
+        while (pos >= len && p.next != null) {
             p = p.next;
             len += p.len;
         }

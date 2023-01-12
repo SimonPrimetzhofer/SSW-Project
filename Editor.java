@@ -39,7 +39,7 @@ public class Editor {
             final String text = e.getActionCommand();
             int index; // index from start where text occurs or -1 if not found
 
-            index = 4; //pieceListText.indexOf(text, viewer.getCaret().tpos);
+            index = pieceListText.indexOf(text);
             if (index == -1) {
                 // show error message to user
                 showMessageDialog(viewer, "Text " + text + " not found!");
@@ -159,6 +159,7 @@ public class Editor {
             }
         });
         frame.setResizable(true);
+        scrollBar.grabFocus();
         frame.setContentPane(panel);
         frame.setVisible(true);
         frame.getContentPane().repaint();

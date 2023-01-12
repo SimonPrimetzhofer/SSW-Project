@@ -348,6 +348,7 @@ public class PieceListViewer extends Canvas {
             while (rightOffset < selectedText.length() && Character.isLetterOrDigit(selectedText.charAt(rightOffset))) {
                 rightOffset++;
             }
+
             setSelection(leftOffset + 1 + pos.org, rightOffset + pos.org);
             lastPos = pos;
         } else {
@@ -588,7 +589,7 @@ public class PieceListViewer extends Canvas {
     }
 
     public void paste() {
-        Transferable clipboardContent = clipboard.getContents(this);
+        Transferable clipboardContent = clipboard.getContents(PieceListViewer.this);
         try {
             String clipboardString = (String) clipboardContent.getTransferData(DataFlavor.stringFlavor);
             text.insert(caret.tpos, clipboardString);
