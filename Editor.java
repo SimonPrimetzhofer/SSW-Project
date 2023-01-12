@@ -69,39 +69,39 @@ public class Editor {
         final JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
-        MenuBar menuBar = new MenuBar();
+        JMenuBar menuBar = new JMenuBar();
         // File actions
-        Menu fileActionMenu = new Menu("File");
-        MenuItem openFile = new MenuItem("Open");
+        JMenu fileActionMenu = new JMenu("File");
+        JMenuItem openFile = new JMenuItem("Open");
         openFile.addActionListener(e -> {
             if (fileChooser.showOpenDialog(viewer) == JFileChooser.APPROVE_OPTION) {
                 Editor.main(new String[]{fileChooser.getSelectedFile().getAbsolutePath()});
             }
 
         });
-        MenuItem saveFile = new MenuItem("Save");
+        JMenuItem saveFile = new JMenuItem("Save");
         saveFile.addActionListener(e -> pieceListText.save());
 
         fileActionMenu.add(openFile);
         fileActionMenu.add(saveFile);
 
         // Edit actions
-        Menu editActionMenu = new Menu("Edit");
-        MenuItem cut = new MenuItem("Cut");
+        JMenu editActionMenu = new JMenu("Edit");
+        JMenuItem cut = new JMenuItem("Cut");
         cut.addActionListener(e -> {
             if (viewer.getSelection() != null) {
                 viewer.cut(viewer.getSelection().beg.tpos, viewer.getSelection().end.tpos);
             }
         });
 
-        MenuItem copy = new MenuItem("Copy");
+        JMenuItem copy = new JMenuItem("Copy");
         copy.addActionListener(e -> {
             if (viewer.getSelection() != null) {
                 viewer.copy(viewer.getSelection().beg.tpos, viewer.getSelection().end.tpos);
             }
         });
 
-        MenuItem paste = new MenuItem(("Paste"));
+        JMenuItem paste = new JMenuItem(("Paste"));
         paste.addActionListener(e -> {
             if (viewer.getCaret() != null) {
                 viewer.paste();
@@ -113,30 +113,30 @@ public class Editor {
         editActionMenu.add(paste);
 
         // Font menu
-        Menu fontMenu = new Menu("Fonts");
+        JMenu fontMenu = new JMenu("Fonts");
         Arrays.stream(GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts())
                 .filter(font -> font.getFontName().equals(font.getFamily()))
                 .limit(15)
                 .forEach(font -> {
-                    MenuItem fontItem = new MenuItem(font.getFontName());
+                    JMenuItem fontItem = new JMenuItem(font.getFontName());
                     fontItem.addActionListener(e -> viewer.updateFont(e.getActionCommand()));
                     fontMenu.add(fontItem);
                 });
 
         // size menu
-        Menu sizeMenu = new Menu("Size");
+        JMenu sizeMenu = new JMenu("Size");
         IntStream.iterate(6, num -> num + 4).limit(15).forEach(num -> {
-            MenuItem sizeItem = new MenuItem(String.valueOf(num));
+            JMenuItem sizeItem = new JMenuItem(String.valueOf(num));
             sizeItem.addActionListener(e -> viewer.updateSize(Integer.parseInt(e.getActionCommand())));
             sizeMenu.add(sizeItem);
         });
 
-        Menu styleMenu = new Menu("Style");
-        MenuItem normal = new MenuItem("Plain");
+        JMenu styleMenu = new JMenu("Style");
+        JMenuItem normal = new JMenuItem("Plain");
         normal.addActionListener(e -> viewer.updateStyle(Font.PLAIN));
-        MenuItem bold = new MenuItem("Bold");
+        JMenuItem bold = new JMenuItem("Bold");
         bold.addActionListener(e -> viewer.updateStyle(Font.BOLD));
-        MenuItem italic = new MenuItem("Italic");
+        JMenuItem italic = new JMenuItem("Italic");
         italic.addActionListener(e -> viewer.updateStyle(Font.ITALIC));
         styleMenu.add(normal);
         styleMenu.add(bold);
@@ -149,7 +149,7 @@ public class Editor {
         menuBar.add(sizeMenu);
         menuBar.add(styleMenu);
 
-        frame.setMenuBar(menuBar);
+        frame.setJMenuBar(menuBar);
 
         frame.setSize(700, 800);
         frame.addComponentListener(new ComponentAdapter() {

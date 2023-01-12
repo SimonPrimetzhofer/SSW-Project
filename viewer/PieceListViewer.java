@@ -333,8 +333,8 @@ public class PieceListViewer extends Canvas {
         removeCaret();
         removeSelection();
 
-        Position pos = Pos(e.getX(), e.getY());
         if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+            Position pos = Pos(e.getX(), e.getY());
             String selectedText = pos.line.text;
 
             // check if the user clicked on a character or whitespace
@@ -349,10 +349,12 @@ public class PieceListViewer extends Canvas {
                 rightOffset++;
             }
             setSelection(leftOffset + 1 + pos.org, rightOffset + pos.org);
+            lastPos = pos;
         } else {
+            Position pos = Pos(e.getX(), e.getY());
             sel = new Selection(pos, pos);
+            lastPos = pos;
         }
-        lastPos = pos;
     }
 
     private void doMouseDragged(MouseEvent e) {

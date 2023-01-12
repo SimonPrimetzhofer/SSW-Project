@@ -34,8 +34,10 @@ public class PieceListText implements PieceListContract {
 
     public void save() {
         try {
+            String concatenatedText = getConcatenatedText();
             FileWriter fileWriter = new FileWriter(firstPiece.file);
-            fileWriter.write(getConcatenatedText());
+            fileWriter.write(concatenatedText);
+            fileWriter.flush();
             fileWriter.close();
         } catch (IOException ex) {
             System.err.println("Error opening file");
@@ -56,27 +58,6 @@ public class PieceListText implements PieceListContract {
         }
         scratch = new File(SCRATCH_FILE);
         scratch.deleteOnExit();
-    }
-
-    private String readFileContent(final FileInputStream in) {
-        StringBuilder resultStringBuilder = new StringBuilder();
-
-        try {
-            len = in.available();
-            try (BufferedReader br
-                         = new BufferedReader(new InputStreamReader(in))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    resultStringBuilder.append(line).append("\n");
-                }
-            }
-
-            in.close();
-        } catch (IOException e) {
-            len = 0;
-        }
-
-        return resultStringBuilder.toString();
     }
 
     @Override
@@ -115,7 +96,7 @@ public class PieceListText implements PieceListContract {
         // split at pos for inserting text here
         Piece p = split(pos);
 
-        if (!(p.file == scratch && scratch.length() == p.filePos + p.len)) {
+        if (p.file != scratch || scratch.length() != p.filePos + p.len) {
             Piece q = new Piece(0, scratch, (int) scratch.length());
             q.next = p.next;
             p.next = q;
@@ -126,10 +107,7 @@ public class PieceListText implements PieceListContract {
         try {
             FileWriter writer = new FileWriter(scratch, true);
             for (int i = 0; i < text.length(); i++) {
-                char ch = text.charAt(i);
-                if (Character.isLetterOrDigit(ch)) {
-                    writer.append(ch);
-                }
+                writer.append(text.charAt(i));
             }
             writer.flush();
             writer.close();
