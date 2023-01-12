@@ -104,7 +104,7 @@ public class Editor {
         MenuItem paste = new MenuItem(("Paste"));
         paste.addActionListener(e -> {
             if (viewer.getCaret() != null) {
-                viewer.paste(viewer.getCaret().tpos);
+                viewer.paste();
             }
         });
 

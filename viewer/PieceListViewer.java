@@ -334,27 +334,21 @@ public class PieceListViewer extends Canvas {
         removeSelection();
 
         Position pos = Pos(e.getX(), e.getY());
-
         if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
             String selectedText = pos.line.text;
 
             // check if the user clicked on a character or whitespace
-            if (Character.isLetterOrDigit(selectedText.charAt(pos.off))) {
-                int leftOffset = pos.off;
-                // find left border of word
-                while (leftOffset >= 0 && Character.isLetterOrDigit(selectedText.charAt(leftOffset))) {
-                    leftOffset--;
-                }
-                // find right border of word
-                int rightOffset = pos.off;
-                while (rightOffset < selectedText.length() && Character.isLetterOrDigit(selectedText.charAt(rightOffset))) {
-                    rightOffset++;
-                }
-                setSelection(leftOffset + 1 + pos.org, rightOffset + pos.org);
-                invertSelection(sel.beg, sel.end);
-            } else {
-                setSelection(pos.tpos, pos.tpos);
+            int leftOffset = pos.off;
+            // find left border of word
+            while (leftOffset >= 0 && Character.isLetterOrDigit(selectedText.charAt(leftOffset))) {
+                leftOffset--;
             }
+            // find right border of word
+            int rightOffset = pos.off;
+            while (rightOffset < selectedText.length() && Character.isLetterOrDigit(selectedText.charAt(rightOffset))) {
+                rightOffset++;
+            }
+            setSelection(leftOffset + 1 + pos.org, rightOffset + pos.org);
         } else {
             sel = new Selection(pos, pos);
         }
@@ -591,7 +585,7 @@ public class PieceListViewer extends Canvas {
         removeSelection();
     }
 
-    public void paste(int to) {
+    public void paste() {
         Transferable clipboardContent = clipboard.getContents(this);
         try {
             String clipboardString = (String) clipboardContent.getTransferData(DataFlavor.stringFlavor);

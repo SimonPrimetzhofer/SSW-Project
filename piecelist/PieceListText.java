@@ -81,7 +81,9 @@ public class PieceListText implements PieceListContract {
 
     @Override
     public char charAt(int pos) {
-        if (pos < 0 || pos >= len) return '\0';
+        if (pos < 0 || pos >= len) {
+            return '\0';
+        }
 
         Piece p = firstPiece;
 
@@ -148,8 +150,6 @@ public class PieceListText implements PieceListContract {
         Piece b = split(to);
         // cut out all pieces in between
         a.next = b.next;
-        len -= to - from; // TODO:
-
         notify(new UpdateEvent(from, to, null));
     }
 
