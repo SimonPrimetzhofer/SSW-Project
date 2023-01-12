@@ -1,6 +1,5 @@
 package piecelist;
 
-import common.FileWriter;
 import common.UpdateEvent;
 import contract.PieceListContract;
 import contract.UpdateEventListener;
@@ -11,80 +10,52 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class PieceListText implements PieceListContract {
-    private final Piece firstPiece;   // first piece of text
-    private final File scratch;       // scratch file for adding new stuff
+    private static final String SCRATCH_FILE = "./scratch.txt";
     ArrayList<UpdateEventListener> listeners = new ArrayList<>();
+    private Piece firstPiece;   // first piece of text
+    private File scratch;       // scratch file for adding new stuff
     private int len;            // total text length
 
     public PieceListText(String filename) {
-        scratch = new File("./scratch.txt");
-        File firstFile = new File(filename);
-        firstPiece = new Piece((int) firstFile.length(), firstFile, 0);
-        len = (int) firstFile.length();
+        loadFrom(filename);
     }
 
     public int getLen() {
         return len;
     }
 
+    private String getConcatenatedText() {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < len; i++) {
+            stringBuilder.append(charAt(i));
+        }
+        return stringBuilder.toString();
+    }
+
     public void save() {
-        // save to file
-    }
-
-    @Override
-    public void loadFrom(InputStream in) {
-        // TODO: Load fonts and styles from text file
         try {
-            //len = in.available();
-            try (BufferedReader br
-                         = new BufferedReader(new InputStreamReader(in))) {
-                // get textoffset from file
-                int textOffset = br.read();
-                // read font and style descriptors
-                for (int i = 0; i < textOffset; i += 3) {
-                    int pieceLen = br.read();
-                    int font = br.read();
-                    int style = br.read();
-                }
-
-                //
-
-                String line;
-                while ((line = br.readLine()) != null) {
-                }
-            }
-
-            in.close();
-        } catch (IOException e) {
-            len = 0;
+            FileWriter fileWriter = new FileWriter(firstPiece.file);
+            fileWriter.write(getConcatenatedText());
+            fileWriter.close();
+        } catch (IOException ex) {
+            System.err.println("Error opening file");
         }
     }
 
     @Override
-    public void storeTo(OutputStream out) {
-        Piece currentPiece = firstPiece;
-        StringBuilder result = new StringBuilder();
-
-        while (currentPiece != null) {
-            // write current piece content to file
-            try {
-                // TODO: don't append whole file (only starting from filePos up to filePos + len
-                // TODO: don't append \0 in middle of file
-                result.append(readFileContent(new FileInputStream(currentPiece.file)));
-            } catch (FileNotFoundException ex) {
-                System.err.printf("Could not find file %s", currentPiece.file.getName());
-            }
-            currentPiece = currentPiece.next;
+    public void loadFrom(String filename) {
+        try {
+            FileInputStream in = new FileInputStream(filename);
+            len = in.available();
+            File file = new File(filename);
+            firstPiece = new Piece(len, file, 0);
+            in.close();
+        } catch (IOException ex) {
+            len = 0;
+            firstPiece = new Piece(len, new File(filename), 0);
         }
-
-        try (BufferedWriter bw
-                     = new BufferedWriter(new OutputStreamWriter(out))) {
-            bw.write(result.toString());
-        } catch (IOException e) {
-            System.err.println("Could not write to file");
-        }
-
-
+        scratch = new File(SCRATCH_FILE);
+        scratch.deleteOnExit();
     }
 
     private String readFileContent(final FileInputStream in) {
@@ -120,35 +91,55 @@ public class PieceListText implements PieceListContract {
             len += p.len;
         }
 
-        String fileContent = getFileContent(p.file);
+        try {
+            int len2 = len - pos;
+            int len1 = p.len - len2;
+            FileReader reader = new FileReader(p.file);
 
-        return fileContent.charAt(p.filePos + pos);
+            reader.skip(p.filePos + len1);
+            int a = reader.read();
+            if (a == -1) {
+                return '\0';
+            }
+            reader.close();
+            return (char) a;
+        } catch (Exception ex) {
+            return '\0';
+        }
     }
 
     @Override
-    public void insert(int pos, char ch) {
+    public void insert(int pos, String text) {
         // split at pos for inserting text here
         Piece p = split(pos);
 
-        // TODO: check if not last piece on scratch file
-        if (!(p.file == scratch && p.next == null)) {
+        if (!(p.file == scratch && scratch.length() == p.filePos + p.len)) {
             Piece q = new Piece(0, scratch, (int) scratch.length());
-
-            // new piece is predecessor of previous piece
             q.next = p.next;
-            // previous p
             p.next = q;
-            //
             p = q;
         }
-        // write character
-        FileWriter.write(scratch.getAbsolutePath(), ch);
 
-        // increase length of piece and overall text
-        p.len++;
-        len++;
+        // write to scratch
+        try {
+            FileWriter writer = new FileWriter(scratch, true);
+            for (int i = 0; i < text.length(); i++) {
+                char ch = text.charAt(i);
+                if (Character.isLetterOrDigit(ch)) {
+                    writer.append(ch);
+                }
+            }
+            writer.flush();
+            writer.close();
 
-        notify(new UpdateEvent(pos, pos, ch));
+            p.len += text.length();
+            len += text.length();
+
+        } catch (IOException e) {
+            System.err.println("Could not write to scratch");
+        }
+
+        notify(new UpdateEvent(pos, pos, text));
     }
 
     @Override
@@ -157,8 +148,9 @@ public class PieceListText implements PieceListContract {
         Piece b = split(to);
         // cut out all pieces in between
         a.next = b.next;
+        len -= to - from; // TODO:
 
-        notify(new UpdateEvent(from, to, '\0'));
+        notify(new UpdateEvent(from, to, null));
     }
 
     @Override
@@ -166,7 +158,7 @@ public class PieceListText implements PieceListContract {
         Piece p = firstPiece;
 
         while (p != null) {
-            int index = getFileContent(p.file).indexOf(pattern);
+            int index = getFileContent(p.file, 0).indexOf(pattern);
             if (index > -1) {
                 return p.filePos + index;
             }
@@ -175,6 +167,37 @@ public class PieceListText implements PieceListContract {
         }
 
         return -1;
+    }
+
+    public int indexOf(String pattern, int skip) {
+        Piece p = firstPiece;
+
+        while (p != null) {
+            int index = getFileContent(p.file, skip).indexOf(pattern);
+            if (index > -1) {
+                return p.filePos + index;
+            }
+
+            p = p.next;
+        }
+
+        return -1;
+    }
+
+    private String getFileContent(File file, int skip) {
+        StringBuilder resultStringBuilder = new StringBuilder();
+        try (BufferedReader br
+                     = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
+            br.skip(0);
+            String line;
+            while ((line = br.readLine()) != null) {
+                resultStringBuilder.append(line).append("\n");
+            }
+        } catch (IOException ex) {
+            System.err.printf("Could not open or read from file %s!", file.getName());
+        }
+
+        return resultStringBuilder.toString();
     }
 
     @Override
@@ -210,31 +233,32 @@ public class PieceListText implements PieceListContract {
             start.font = new Font(font, start.font.getStyle(), start.font.getSize());
             start = start.next;
         }
-        notify(new UpdateEvent(from, to, '\0'));
+
+        // TODO: notify
     }
 
     public void setSize(int from, int to, int size) {
+        Piece start = split(from).next;
+        Piece end = split(to).next;
 
+        while (start != end) {
+            start.size = size;
+            start = start.next;
+        }
+
+        // TODO: notify
     }
 
     public void setStyle(int from, int to, int style) {
+        Piece start = split(from).next;
+        Piece end = split(to).next;
 
-    }
-
-
-    private String getFileContent(File file) {
-        StringBuilder resultStringBuilder = new StringBuilder();
-        try (BufferedReader br
-                     = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                resultStringBuilder.append(line).append("\n");
-            }
-        } catch (IOException ex) {
-            System.err.printf("Could not open or read from file %s!", file.getName());
+        while (start != end) {
+            start.style = style;
+            start = start.next;
         }
 
-        return resultStringBuilder.toString();
+        // TODO: notify
     }
 
     // update behaviour

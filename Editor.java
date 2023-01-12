@@ -3,6 +3,8 @@ import viewer.PieceListViewer;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.FileInputStream;
@@ -21,7 +23,6 @@ public class Editor {
         }
         String path = arg[0];
         try {
-            // TODO: schaun ma moi
             FileInputStream s = new FileInputStream(path);
         } catch (FileNotFoundException e) {
             System.out.println("-- file " + path + " not found");
@@ -36,16 +37,16 @@ public class Editor {
         final JTextField textField = new JTextField();
         textField.addActionListener(e -> {
             final String text = e.getActionCommand();
-            int index = pieceListText.indexOf(text);
+            int index; // index from start where text occurs or -1 if not found
 
+            index = 4; //pieceListText.indexOf(text, viewer.getCaret().tpos);
             if (index == -1) {
                 // show error message to user
                 showMessageDialog(viewer, "Text " + text + " not found!");
-                // reset caret to start
-                viewer.setCaret(0);
             } else {
                 // update index to found first occurence
                 viewer.setCaret(index);
+                viewer.getScrollBar().setValue(index);
             }
 
             // reset input
@@ -88,18 +89,25 @@ public class Editor {
         Menu editActionMenu = new Menu("Edit");
         MenuItem cut = new MenuItem("Cut");
         cut.addActionListener(e -> {
-            // TODO: cut text
+            if (viewer.getSelection() != null) {
+                viewer.cut(viewer.getSelection().beg.tpos, viewer.getSelection().end.tpos);
+            }
         });
 
         MenuItem copy = new MenuItem("Copy");
         copy.addActionListener(e -> {
-            // TODO: copy text
+            if (viewer.getSelection() != null) {
+                viewer.copy(viewer.getSelection().beg.tpos, viewer.getSelection().end.tpos);
+            }
         });
 
         MenuItem paste = new MenuItem(("Paste"));
         paste.addActionListener(e -> {
-            // TODO: paste text
+            if (viewer.getCaret() != null) {
+                viewer.paste(viewer.getCaret().tpos);
+            }
         });
+
         editActionMenu.add(cut);
         editActionMenu.add(copy);
         editActionMenu.add(paste);
@@ -144,6 +152,12 @@ public class Editor {
         frame.setMenuBar(menuBar);
 
         frame.setSize(700, 800);
+        frame.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                viewer.resizeEditor();
+            }
+        });
         frame.setResizable(true);
         frame.setContentPane(panel);
         frame.setVisible(true);

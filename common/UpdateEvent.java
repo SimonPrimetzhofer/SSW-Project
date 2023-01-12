@@ -1,25 +1,13 @@
 package common;
 
 public class UpdateEvent {  // [from..to[ was replaced by text
-    private final int from;
-    private final int to;
-    private final char ch;
+    public final int from;
+    public final int to;
+    public final String text;
 
-    public UpdateEvent(int a, int b, char ch) {
+    public UpdateEvent(int a, int b, String text) {
         from = a;
         to = b;
-        this.ch = ch;
-    }
-
-    public int getFrom() {
-        return from;
-    }
-
-    public int getTo() {
-        return to;
-    }
-
-    public char getCh() {
-        return ch;
+        this.text = text;
     }
 }

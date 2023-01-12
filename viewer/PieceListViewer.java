@@ -5,37 +5,12 @@ import piecelist.PieceListText;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.Collections;
-
-class Line {
-    String text;    // text of this line
-    int len;        // length of this line (including CRLF)
-    int x, y, w, h; // top left corner, width, height
-    int base;       // base line
-    Line prev, next;
-}
-
-class Position {
-    Line line; // line containing this position
-    int x, y;  // base line point corresponding to this position
-    int tpos;  // text position (relative to start of text)
-    int org;   // origin (text position of first character in this line)
-    int off;   // text offset from org
-
-    public int getTPos() {
-        return tpos;
-    }
-}
-
-class Selection {
-    Position beg, end;
-
-    Selection(Position a, Position b) {
-        beg = a;
-        end = b;
-    }
-}
 
 /**********************************************************************
  *  legacy.Viewer
@@ -46,8 +21,7 @@ public class PieceListViewer extends Canvas {
     static final int BOTTOM = 5; // bottom margin
     static final int LEFT = 5;   // left margin
     static final int EOF = '\0';
-    static final char CR = '\r';
-    static final char LF = '\n';
+    static final String CRLF = "\r\n";
 
     PieceListText text;
     Line firstLine = null; // the lines in this viewer
@@ -58,17 +32,14 @@ public class PieceListViewer extends Canvas {
     Position lastPos;      // last mouse position: used during mouse dragging
     JScrollBar scrollBar;
     Graphics g;
+    Clipboard clipboard;
 
     public PieceListViewer(PieceListText t, JScrollBar sb) {
         scrollBar = sb;
         scrollBar.setMaximum(t.getLen());
         scrollBar.setUnitIncrement(50);
         scrollBar.setBlockIncrement(500);
-        scrollBar.addAdjustmentListener(new AdjustmentListener() {
-            public void adjustmentValueChanged(AdjustmentEvent e) {
-                doScroll(e);
-            }
-        });
+        scrollBar.addAdjustmentListener(e -> doScroll(e));
         text = t;
         text.addUpdateEventListener(e -> doUpdate(e));
         this.addKeyListener(new KeyAdapter() {
@@ -81,12 +52,6 @@ public class PieceListViewer extends Canvas {
             }
         });
         this.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    doMouseDoubleClicked(e);
-                }
-            }
-
             public void mousePressed(MouseEvent e) {
                 doMousePressed(e);
             }
@@ -100,8 +65,15 @@ public class PieceListViewer extends Canvas {
                 doMouseDragged(e);
             }
         });
+        this.addMouseWheelListener(e -> scrollBar.setValue(scrollBar.getValue() + e.getUnitsToScroll() * 100));
         // disable TAB as a focus traversal key
         setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, Collections.<AWTKeyStroke>emptySet());
+
+        clipboard = getToolkit().getSystemClipboard();
+    }
+
+    public Selection getSelection() {
+        return sel;
     }
 
     /*------------------------------------------------------------
@@ -117,7 +89,9 @@ public class PieceListViewer extends Canvas {
             } while (pos > 0 && ch != '\n');
             if (pos > 0) pos++;
         }
-        if (pos != firstTpos) { // scroll
+
+        if (pos != firstTpos) {
+            // scroll to line
             Position caret0 = caret;
             Selection sel0 = sel;
             removeSelection();
@@ -231,6 +205,19 @@ public class PieceListViewer extends Canvas {
         g.setPaintMode();
     }
 
+    public void setCaret(int x, int y) {
+        setCaret(Pos(x, y));
+    }
+
+    public void removeCaret() {
+        if (caret != null) invertCaret();
+        caret = null;
+    }
+
+    public Position getCaret() {
+        return caret;
+    }
+
     private void setCaret(Position pos) {
         removeCaret();
         removeSelection();
@@ -244,13 +231,8 @@ public class PieceListViewer extends Canvas {
         } else caret = null;
     }
 
-    public void setCaret(int x, int y) {
-        setCaret(Pos(x, y));
-    }
-
-    public void removeCaret() {
-        if (caret != null) invertCaret();
-        caret = null;
+    public JScrollBar getScrollBar() {
+        return scrollBar;
     }
 
     /*------------------------------------------------------------
@@ -312,10 +294,9 @@ public class PieceListViewer extends Canvas {
                 }
             } else if (ch == KeyEvent.VK_ESCAPE) {
             } else if (ch == KeyEvent.VK_ENTER) {
-                text.insert(caret.tpos, CR);
-                text.insert(caret.tpos, LF);
+                text.insert(caret.tpos, CRLF);
             } else {
-                text.insert(caret.tpos, ch);
+                text.insert(caret.tpos, String.valueOf(ch));
             }
             scrollBar.setValues(firstTpos, 0, 0, text.getLen());
         }
@@ -348,30 +329,35 @@ public class PieceListViewer extends Canvas {
      *  mouse handling
      *-----------------------------------------------------------*/
 
-    private void doMouseDoubleClicked(MouseEvent e) {
-        Position pos = Pos(e.getX(), e.getY());
-
-        // TODO: code verschönern -> zweifacher zugriff auf charAt
-        // find left border of word
-        int leftCharCount = 0;
-        while (!Character.isWhitespace(text.charAt(pos.tpos - 1 - leftCharCount)) && text.charAt(pos.tpos - 1 - leftCharCount) != '\0') {
-            leftCharCount++;
-        }
-
-        // find right border of word
-        int rightCharCount = 0;
-        while (!Character.isWhitespace(text.charAt(pos.tpos + rightCharCount)) && text.charAt(pos.tpos + rightCharCount) != '\0') {
-            rightCharCount++;
-        }
-        setSelection(pos.tpos - leftCharCount, pos.tpos + rightCharCount);
-        lastPos = pos;
-    }
-
     private void doMousePressed(MouseEvent e) {
         removeCaret();
         removeSelection();
+
         Position pos = Pos(e.getX(), e.getY());
-        sel = new Selection(pos, pos);
+
+        if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+            String selectedText = pos.line.text;
+
+            // check if the user clicked on a character or whitespace
+            if (Character.isLetterOrDigit(selectedText.charAt(pos.off))) {
+                int leftOffset = pos.off;
+                // find left border of word
+                while (leftOffset >= 0 && Character.isLetterOrDigit(selectedText.charAt(leftOffset))) {
+                    leftOffset--;
+                }
+                // find right border of word
+                int rightOffset = pos.off;
+                while (rightOffset < selectedText.length() && Character.isLetterOrDigit(selectedText.charAt(rightOffset))) {
+                    rightOffset++;
+                }
+                setSelection(leftOffset + 1 + pos.org, rightOffset + pos.org);
+                invertSelection(sel.beg, sel.end);
+            } else {
+                setSelection(pos.tpos, pos.tpos);
+            }
+        } else {
+            sel = new Selection(pos, pos);
+        }
         lastPos = pos;
     }
 
@@ -496,29 +482,29 @@ public class PieceListViewer extends Canvas {
         FontMetrics m = g.getFontMetrics();
         Position pos = caret;
 
-        if (e.getFrom() == e.getTo()) { // insert
-            if (e.getFrom() != caret.tpos) pos = Pos(e.getFrom());
-            int newCarPos = pos.tpos + e.getText().length();
-            if (e.getText().indexOf(CR) >= 0) {
+        if (e.from == e.to) { // insert
+            if (e.from != caret.tpos) pos = Pos(e.from);
+            int newCarPos = pos.tpos + e.text.length();
+            if (e.text.indexOf(CRLF) >= 0) {
                 rebuildFrom(pos);
                 if (pos.y + pos.line.h > getHeight() - BOTTOM)
                     scrollBar.setValue(firstTpos + firstLine.len);
             } else {
                 b = new StringBuffer(pos.line.text);
-                b.insert(pos.off, e.getText());
+                b.insert(pos.off, e.text);
                 pos.line.text = b.toString();
-                pos.line.w += stringWidth(m, e.getText());
-                pos.line.len += e.getText().length();
-                lastTpos += e.getText().length();
+                pos.line.w += stringWidth(m, e.text);
+                pos.line.len += e.text.length();
+                lastTpos += e.text.length();
                 repaint(pos.line.x, pos.line.y, getWidth(), pos.line.h + 1);
             }
             setCaret(newCarPos);
 
-        } else if (e.getText() == null) { // delete
-            if (caret == null || e.getTo() != caret.tpos) pos = Pos(e.getTo());
-            int d = e.getTo() - e.getFrom();
+        } else if (e.text == null) { // delete
+            if (caret == null || e.to != caret.tpos) pos = Pos(e.to);
+            int d = e.to - e.from;
             if (pos.off - d < 0) { // delete across lines
-                rebuildFrom(Pos(e.getFrom()));
+                rebuildFrom(Pos(e.from));
             } else { // delete within a line
                 b = new StringBuffer(pos.line.text);
                 b.delete(pos.off - d, pos.off);
@@ -528,7 +514,7 @@ public class PieceListViewer extends Canvas {
                 lastTpos -= d;
                 repaint(pos.line.x, pos.line.y, getWidth(), pos.line.h + 1);
             }
-            setCaret(e.getFrom());
+            setCaret(e.from);
         }
     }
 
@@ -569,4 +555,54 @@ public class PieceListViewer extends Canvas {
         if (caret != null) invertCaret();
         if (sel != null) invertSelection(sel.beg, sel.end);
     }
+
+    public void resizeEditor() {
+        firstLine = fill(TOP, getHeight() - BOTTOM, 0);
+        repaint(0, 0, getWidth(), getHeight());
+    }
+
+    // clipboard actions
+    public void cut(int from, int to) {
+        // get selected text
+        StringBuilder selection = new StringBuilder();
+
+        for (int i = from; i < to; i++) {
+            selection.append(text.charAt(i));
+        }
+
+        text.delete(from, to);
+        StringSelection stringSelection = new StringSelection(selection.toString());
+        clipboard.setContents(stringSelection, stringSelection);
+
+        removeSelection();
+    }
+
+    public void copy(int from, int to) {
+        // get selected text
+        StringBuilder selection = new StringBuilder();
+
+        for (int i = from; i < to; i++) {
+            selection.append(text.charAt(i));
+        }
+
+        StringSelection stringSelection = new StringSelection(selection.toString());
+        clipboard.setContents(stringSelection, stringSelection);
+
+        removeSelection();
+    }
+
+    public void paste(int to) {
+        Transferable clipboardContent = clipboard.getContents(this);
+        try {
+            String clipboardString = (String) clipboardContent.getTransferData(DataFlavor.stringFlavor);
+            text.insert(caret.tpos, clipboardString);
+        } catch (Exception ex) {
+            System.err.println("Could not get clipboard data");
+        }
+    }
+
+    public void find(String text) {
+        int caretPos = caret.tpos;
+    }
+
 }

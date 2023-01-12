@@ -1,15 +1,12 @@
 package contract;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-
 public interface TextContract {
-    void loadFrom(InputStream in);
-    void storeTo(OutputStream out);
+    void loadFrom(String filename);
 
     char charAt(int pos);
 
-    void insert(int pos, char ch);
+    void insert(int pos, String text);
+
     void delete(int from, int to);
 
     int indexOf(String pattern);

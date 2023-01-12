@@ -4,16 +4,13 @@ import java.awt.*;
 import java.io.File;
 
 public class Piece {
-    // basic text
-    int len;        // length of this piece
+    public int len;        // length of this piece
+    public Piece next;     // next piece (obviously)
+    public Font font;
+    public int style;
+    public int size;
     File file;      // file containing this piece
     int filePos;    // offset from beginning of file
-    Piece next;     // next piece (obviously)
-
-    // meta information
-    Font font;
-    String style;
-    int size;
 
     public Piece(int len, File file, int filePos) {
         this.len = len;
