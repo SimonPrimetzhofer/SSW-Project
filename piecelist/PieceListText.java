@@ -83,7 +83,7 @@ public class PieceListText implements PieceListContract {
             reader.skip(p.filePos + len1);
             int a = reader.read();
             if (a == -1) {
-                return '\0';
+                return ' ';
             }
             reader.close();
             return (char) a;

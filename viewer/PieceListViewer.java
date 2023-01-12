@@ -386,7 +386,7 @@ public class PieceListViewer extends Canvas {
     }
 
     private void doMouseReleased(MouseEvent e) {
-        if (sel.beg.tpos == sel.end.tpos) setCaret(sel.beg);
+        if (sel != null && sel.beg.tpos == sel.end.tpos) setCaret(sel.beg);
         lastPos = null;
     }
 
